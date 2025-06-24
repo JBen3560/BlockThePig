@@ -33,22 +33,23 @@ def main():
 
     # ------------------------- Gameplay Loop -------------------------
 
-    round_start = True
-    while True:
-        # See whether it's possible to win with the starting blocks
-        if round_start:
-            if check_instant_win(hex_grid):
-                round_start = True # maybe redundant
-                continue
-            else:
-                round_start = False
+    if table:
+        round_start = True
+        while True:
+            # See whether it's possible to win with the starting blocks
+            if round_start:
+                if check_instant_win(hex_grid):
+                    round_start = True # maybe redundant
+                    continue
+                else:
+                    round_start = False
 
-        pyautogui.sleep(1)
-        print("No instant win found, continuing with the game...")
+            pyautogui.sleep(1)
+            print("No instant win found, continuing with the game...")
 
-        # Main logic
-        solve_level(table, 3)
-        break #testing
+            # Main logic
+            #solve_level(table, 3)
+            break #testing
 
 if __name__ == "__main__":
     main()
