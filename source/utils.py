@@ -1,7 +1,12 @@
-import math
 import pyautogui
+from collections import deque
 from PIL import ImageGrab
 from colorama import Fore, init
+
+# TODO
+# - Consider removing alpha beta altogether
+# - Consider combining the won and min distance algs in evaluate_table,
+#   depending on depth and how often the min distance seems to be used
 
 # Printing in color
 init(autoreset=True)
@@ -17,9 +22,11 @@ def print_table(table):
     for row in table:
             for char in row:
                 color = color_map.get(char, Fore.RESET)
-                print(color + char + ' ', end='')  # space between characters
-            print()  # new line after each row
-            
+                print(color + char + ' ', end='')
+            print()
+
+
+# Check if the level is over by looking for specific buttons     
 def level_over():
     # Check for continue button
     try:
@@ -103,26 +110,76 @@ def setup_table(hex_grid):
 
 # Evaluate the current state of the table
 def evaluate_table(table):
-    if board.is_checkmate():
-        return -9999 if board.turn else 9999
-    if board.is_stalemate() or board.is_insufficient_material():
-        return 0
+    # Variables for whether the level is won or lost
+    won = True
+    lost = False
+    
+    # Find the pig
+    pig_position = None
+    for i in range(len(table)):
+        for j in range(len(table[i])):
+            if table[i][j] == 'P':
+                pig_position = (i, j)
+                break
+        if pig_position:
+            break
+    
+    # Level is won if the pig is boxed in
+    visited = set()
+    queue = deque([pig_position])
+    visited.add(pig_position)
+    
+    while queue:
+        r, c = queue.popleft()
 
-    piece_values = {
-        chess.PAWN: 1,
-        chess.KNIGHT: 3,
-        chess.BISHOP: 3,
-        chess.ROOK: 5,
-        chess.QUEEN: 9,
-        chess.KING: 0
-    }
+        # If we can reach an 'X', pig is NOT boxed in
+        if table[r][c] == 'X':
+            won = False
+            break
 
-    value = 0
-    for piece_type in piece_values:
-        value += len(board.pieces(piece_type, chess.WHITE)) * piece_values[piece_type]
-        value -= len(board.pieces(piece_type, chess.BLACK)) * piece_values[piece_type]
+        # Explore 6-directionally
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, 1), (1, -1)]:
+            nr, nc = r + dr, c + dc
 
-    return value
+            if (0 <= nr < len(table) and 0 <= nc < len(table[0]) and
+               (nr, nc) not in visited and table[nr][nc] in ('E', 'X')):
+                visited.add((nr, nc))
+                queue.append((nr, nc))
+                
+    # Level is lost if the pig is adjacent to an X
+    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, 1), (1, -1)]:
+        nr, nc = r + dr, c + dc
+        
+        if table[nr][nc] == 'X':
+            lost = True
+            break
+
+    # Evaluate based on won or lost
+    if won:
+        return 9999
+    if lost:
+        return -9999
+    
+    # Otherwise, evaluate based on the closest 'X' to the pig
+    eval_visited = set()
+    eval_queue = deque([(pig_position, 0)])  # position, distance
+    eval_visited.add(pig_position)
+    min_distance = float('inf')
+    
+    while eval_queue:
+        (r, c), dist = eval_queue.popleft()
+
+        if table[r][c] == 'X' and dist < min_distance:
+            min_distance = dist
+
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, 1), (1, -1)]:
+            nr, nc = r + dr, c + dc
+            if (0 <= nr < len(table) and 0 <= nc < len(table[0]) and
+                (nr, nc) not in eval_visited and table[nr][nc] in ('E', 'X')):
+                eval_visited.add((nr, nc))
+                eval_queue.append(((nr, nc), dist + 1))
+    
+    return min_distance
 
 
 # Determinstically move the pig based on the current board state
@@ -137,28 +194,29 @@ def pig_move(table):
         if pig_position:
             break
     
-    # Spread out from the pig's position to closest edges
-    visited = set([pig_position])
-    frontier = [(pig_position, 0)]  # (position, distance)
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, -1)]
-    while frontier:
-        current_position, distance = frontier.pop(0)
-        
-        # Check if we reached the edge
-        if current_position[0] == 0 or current_position[0] == len(table) - 1 or \
-           current_position[1] == 0 or current_position[1] == len(table[0]) - 1:
-            return current_position
-        
-        # Explore neighbors
-        for direction in directions:
-            neighbor = (current_position[0] + direction[0], current_position[1] + direction[1])
-            if (0 <= neighbor[0] < len(table) and 
-                0 <= neighbor[1] < len(table[0]) and 
-                neighbor not in visited and 
-                table[neighbor[0]][neighbor[1]] != 'B'):
-                visited.add(neighbor)
-                frontier.append((neighbor, distance + 1))
+    # Find the all closest 'X' positions
+    eval_visited = set()
+    eval_queue = deque([(pig_position, 0)])  # position, distance
+    eval_visited.add(pig_position)
+    min_distance = float('inf')
+    x_positions = []
     
+    while eval_queue:
+        (r, c), dist = eval_queue.popleft()
+
+        if table[r][c] == 'X':
+            x_positions.append((r, c), dist)
+            if dist < min_distance:
+                min_distance = dist
+
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, 1), (1, -1)]:
+            nr, nc = r + dr, c + dc
+            if (0 <= nr < len(table) and 0 <= nc < len(table[0]) and
+                (nr, nc) not in eval_visited and table[nr][nc] in ('E', 'X')):
+                eval_visited.add((nr, nc))
+                eval_queue.append(((nr, nc), dist + 1))
+    
+    return (pig_position, move)
     
 
     # If no legal moves (should be game over), return None
@@ -173,7 +231,7 @@ def minimax(table, legal_moves, depth, alpha, beta, maximizing):
 
     # If it's the player's turn
     if maximizing:
-        max_eval = -math.inf
+        max_eval = -float('inf')
         for move in legal_moves:
             # Do the move
             table[move[0]][move[1]] = 'B'
@@ -191,12 +249,13 @@ def minimax(table, legal_moves, depth, alpha, beta, maximizing):
     # If it's the pig's turn
     else:
         # Determine the pig's move
-        move = pig_move(table)
+        pig_pos, move = pig_move(table)
         if move is None:
             # No moves available
             return evaluate_table(table)
         
         # Do the move
+        table[]
         table[move[0]][move[1]] = 'P'
         eval = minimax(table, legal_moves, depth - 1, alpha, beta, True)
         table[move[0]][move[1]] = 'E'

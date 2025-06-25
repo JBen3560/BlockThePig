@@ -1,5 +1,4 @@
 import pyautogui
-import math
 from PIL import ImageGrab
 from utils import minimax, print_table
 
@@ -55,7 +54,7 @@ def check_instant_win(hex_grid):
 def solve_level(table, depth):
     # Setup
     best_move = None
-    best_value = -math.inf
+    best_value = -float('inf')
 
     # Figure out all legal moves
     legal_moves = []
@@ -67,7 +66,7 @@ def solve_level(table, depth):
     for move in legal_moves:
         table[move[0]][move[1]] = 'B'
         legal_moves.remove(move)
-        table_value = minimax(table, legal_moves, depth, -math.inf, math.inf, True)
+        table_value = minimax(table, legal_moves, depth, -float('inf'), float('inf'), True)
         table[move[0]][move[1]] = 'E'
         legal_moves.append(move)
 
