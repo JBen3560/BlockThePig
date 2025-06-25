@@ -2,6 +2,7 @@ import pyautogui
 from btpLogic import check_instant_win, solve_level
 from utils import setup_hex_grid, setup_table, print_table
 
+
 def main():
     # ------------------------- Initialization -------------------------
     
@@ -27,14 +28,24 @@ def main():
     # Set up the table with the game state
     if hex_grid:
         table = setup_table(hex_grid)
-        
-        # Print in color
-        print_table(table)
 
     # ------------------------- Gameplay Loop -------------------------
 
     if table:
-        round_start = True
+        
+        pig_position = None
+        for i in range(len(table)):
+            for j in range(len(table[i])):
+                if table[i][j] == 'P':
+                    pig_position = (i, j)
+                    break
+            if pig_position:
+                break
+        
+        print_table(table)        
+        print(solve_level(table, 2, pig_position))
+        
+        """ round_start = True
         while True:
             # See whether it's possible to win with the starting blocks
             if round_start:
@@ -49,7 +60,7 @@ def main():
 
             # Main logic
             #solve_level(table, 3)
-            break #testing
+            break #testing """
 
 if __name__ == "__main__":
     main()

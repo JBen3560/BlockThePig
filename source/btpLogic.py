@@ -51,7 +51,7 @@ def check_instant_win(hex_grid):
     # If there's nothing to do, return False
     return False
 
-def solve_level(table, depth):
+def solve_level(table, depth, pig_pos):
     # Setup
     best_move = None
     best_value = -float('inf')
@@ -60,9 +60,9 @@ def solve_level(table, depth):
     legal_moves = []
     for i in range(len(table)):
         for j in range(len(table[i])):
-            if table[i][j] == 'E':
+            if table[i][j] == 'E' and abs(i - pig_pos[0]) <= 1:
                 legal_moves.append((i, j))
-    
+        
     for move in legal_moves:
         table[move[0]][move[1]] = 'B'
         legal_moves.remove(move)
