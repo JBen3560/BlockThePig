@@ -40,8 +40,8 @@ def main():
             if pig_position:
                 break
         
-        move, score = solve_level(table, get_depth(), pig_position)     
-        print(move, score)
+        move, score = solve_level(table, get_depth(), pig_position, hex_grid)     
+        """ print(move, score)
         table[move[0]][move[1]] = 'N'
         print_table(table)
 
@@ -49,7 +49,7 @@ def main():
             row, col = move            
             index = (row * 5) + col - 11 + ((row - 1) // 2)
             if 0 <= index < len(hex_grid):
-                pyautogui.moveTo(hex_grid[index][0], hex_grid[index][1])
+                pyautogui.moveTo(hex_grid[index][0], hex_grid[index][1]) """
         
         """ round_start = True
         while True:

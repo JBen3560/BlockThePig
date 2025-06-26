@@ -51,7 +51,7 @@ def check_instant_win(hex_grid):
     # If there's nothing to do, return False
     return False
 
-def solve_level(table, depth, pig_pos):
+def solve_level(table, depth, pig_pos, hex_grid):
     # Setup
     best_move = None
     best_value = -float('inf')
@@ -70,7 +70,7 @@ def solve_level(table, depth, pig_pos):
         #print_table(table) #debugging
         table[move[0]][move[1]] = 'B'
         #pyautogui.sleep(1) #debugging
-        table_value, move_path = minimax(table, depth - 1, -float('inf'), float('inf'), False, path=[("B", move)])
+        table_value, move_path = minimax(table, depth - 1, False, path=[("B", move)])
         table[move[0]][move[1]] = 'E'
 
         if table_value > best_value:
@@ -82,8 +82,21 @@ def solve_level(table, depth, pig_pos):
                 break
 
     print("\nBest path trace:")
+    print(best_path)
     for step_type, pos in best_path:
         print(f"{step_type} → {pos}")
     print(f"Final score: {best_value}\n")
 
+    print(best_move, best_value)
+    table[best_move[0]][best_move[1]] = 'N'
+    print_table(table)
+
+    if best_move:
+        row, col = best_move
+        index = (row * 5) + col - 11 + ((row - 1) // 2)
+        if 0 <= index < len(hex_grid):
+            pyautogui.moveTo(hex_grid[index][0], hex_grid[index][1])
+    
+    
+    
     return (best_move, best_value) # change this to actually place the block

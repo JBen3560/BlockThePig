@@ -280,7 +280,7 @@ def pig_move(table):
 
 
 # Minimax algorithm
-def minimax(table, depth, alpha, beta, maximizing, path=None):
+def minimax(table, depth, maximizing, path=None):
     if path is None:
         path = []
     
@@ -294,14 +294,8 @@ def minimax(table, depth, alpha, beta, maximizing, path=None):
             break
     
     # Base case: if depth is 0 or the game is over
-    if depth == 0:
+    if depth == 0 or pig_escape(table, pig_position) :
         #print("EVAL: depth reached") #debugging
-        return evaluate_table(table, depth), path
-    
-    if pig_escape(table, pig_position):
-        #print(f"EVAL: pig escaped: {pig_position}") #debugging
-        #print_table(table) #debugging
-        #pyautogui.sleep(1) #debugging
         return evaluate_table(table, depth), path
 
     # If it's the player's turn
@@ -322,16 +316,13 @@ def minimax(table, depth, alpha, beta, maximizing, path=None):
             #print_table(table) #debugging
             table[move[0]][move[1]] = 'B'
             #pyautogui.sleep(1) #debugging
-            eval_score, new_path = minimax(table, depth - 1, alpha, beta, False, path + [("B", move)])
+            eval_score, new_path = minimax(table, depth - 1, False, path + [("B", move)])
             table[move[0]][move[1]] = 'E'
             
             # Update the maximum evaluation
             if eval_score > max_eval:
                 max_eval = eval_score
                 best_path = new_path
-            alpha = max(alpha, eval_score)
-            if beta <= alpha:
-                break
         return max_eval, best_path
     # If it's the pig's turn
     else:
@@ -345,7 +336,7 @@ def minimax(table, depth, alpha, beta, maximizing, path=None):
         # Do the move
         table[pig_pos[0]][pig_pos[1]] = 'E'
         table[move[0]][move[1]] = 'P'
-        eval_score, new_path = minimax(table, depth, alpha, beta, True, path + [("P", move)])
+        eval_score, new_path = minimax(table, depth, True, path + [("P", move)])
         table[move[0]][move[1]] = 'E'
         table[pig_pos[0]][pig_pos[1]] = 'P'
         return eval_score, new_path
