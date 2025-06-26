@@ -55,6 +55,7 @@ def solve_level(table, depth, pig_pos):
     # Setup
     best_move = None
     best_value = -float('inf')
+    best_path = []
 
     # Figure out all legal moves
     legal_moves = []
@@ -63,15 +64,26 @@ def solve_level(table, depth, pig_pos):
             if table[i][j] == 'E' and abs(i - pig_pos[0]) <= 1:
                 legal_moves.append((i, j))
         
-    for move in legal_moves:
+    for move in legal_moves:        
+        #table[move[0]][move[1]] = 'C' # debugging
+        #table[0][0] = str(depth) # debugging
+        #print_table(table) #debugging
         table[move[0]][move[1]] = 'B'
-        legal_moves.remove(move)
-        table_value = minimax(table, legal_moves, depth, -float('inf'), float('inf'), True)
+        #pyautogui.sleep(1) #debugging
+        table_value, move_path = minimax(table, depth - 1, -float('inf'), float('inf'), False, path=[("B", move)])
         table[move[0]][move[1]] = 'E'
-        legal_moves.append(move)
 
         if table_value > best_value:
+            print("New best move found:", move, "with value:", table_value) #debugging
             best_value = table_value
             best_move = move
+            best_path = move_path
+            if best_value >= 1000:
+                break
 
-    return best_move # change this to actually place the block
+    print("\nBest path trace:")
+    for step_type, pos in best_path:
+        print(f"{step_type} → {pos}")
+    print(f"Final score: {best_value}\n")
+
+    return (best_move, best_value) # change this to actually place the block

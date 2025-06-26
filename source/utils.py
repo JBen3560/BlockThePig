@@ -16,18 +16,22 @@ color_map = {
     'E': Fore.GREEN,
     'B': Fore.YELLOW,
     'P': Fore.MAGENTA,
+    'N': Fore.RED,
+    'C': Fore.BLUE,
 }
 
 def print_table(table):
-    for row in table:
-            for char in row:
-                color = color_map.get(char, Fore.RESET)
-                print(color + char + ' ', end='')
-            print()
+    print("   0  1  2  3  4  5  6  7  8  9  10 11")  # column headers
+    for i, row in enumerate(table):
+        print(f"{i:>2} ", end='')  # row number, right-aligned
+        for char in row:
+            color = color_map.get(char, Fore.RESET)
+            print(color + char, end='  ')
+        print()  # new line after each row
 
 
 # Check if the level is over by looking for specific buttons     
-def level_over():
+""" def level_over():
     # Check for continue button
     try:
         pyautogui.locateOnScreen('.\\images\\continue.png', confidence=0.8)
@@ -40,7 +44,16 @@ def level_over():
         pyautogui.locateOnScreen('.\\images\\try_again.png', confidence=0.8)
         return True
     except pyautogui.ImageNotFoundException:
-        return False
+        return False """
+    
+def pig_escape(table, pig_position):
+    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, 1), (1, -1)]:
+        nr, nc = pig_position[0] + dr, pig_position[1] + dc
+        
+        if table[nr][nc] == 'X':
+            return True
+    return False
+        
 
 # Get a list of coordinates for the hexagonal grid
 def setup_hex_grid(first_hex, second_hex):
@@ -123,6 +136,9 @@ def evaluate_table(table):
                 break
         if pig_position:
             break
+    if not pig_position:
+        print("Pig not found in the table.")
+        return -9999
     
     # Level is won if the pig is boxed in
     visited = set()
@@ -147,17 +163,14 @@ def evaluate_table(table):
                 queue.append((nr, nc))
                 
     # Level is lost if the pig is adjacent to an X
-    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, 1), (1, -1)]:
-        nr, nc = pig_position[0] + dr, pig_position[1] + dc
-        
-        if table[nr][nc] == 'X':
-            lost = True
-            break
+    lost = pig_escape(table, pig_position)
 
     # Evaluate based on won or lost
     if won:
+        #print("Level won!") #debugging
         return 9999
     if lost:
+        #print("Level lost!") #debugging
         return -9999
     
     # Otherwise, evaluate based on the closest 'X' to the pig
@@ -179,6 +192,7 @@ def evaluate_table(table):
                 eval_visited.add((nr, nc))
                 eval_queue.append(((nr, nc), dist + 1))
     
+    #print(f"Distance evaluated: {min_distance}") #debugging
     return min_distance
 
 
@@ -220,14 +234,21 @@ def pig_move(table):
     # Figure out where the pig is trying to go
     goal = None
     if len(x_positions) == 0:
-        # Pig has no moves
         return (pig_position, None)
     elif len(x_positions) > 1:
-        # Sort by distance, then col, then row
-        x_positions.sort(key=lambda pos: (pos[1], pos[0][1], pos[0][0]))
+        # Sort by distance, then whether row is 0 or 12 (preferred), then col, then row
+        x_positions.sort(
+            key=lambda pos: (
+                pos[1],                               
+                0 if pos[0][0] in (0, 12) else 1,     
+                pos[0][1],                            
+                pos[0][0]                             
+            )
+        )
         goal = x_positions[0][0]
     else:
         goal = x_positions[0][0]
+
         
     # Figure out the pig's move
     move = None
@@ -258,40 +279,72 @@ def pig_move(table):
 
 
 # Minimax algorithm with alpha-beta pruning
-def minimax(table, legal_moves, depth, alpha, beta, maximizing):
+def minimax(table, depth, alpha, beta, maximizing, path=None):
+    if path is None:
+        path = []
+    
+    pig_position = None
+    for i in range(len(table)):
+        for j in range(len(table[i])):
+            if table[i][j] == 'P':
+                pig_position = (i, j)
+                break
+        if pig_position:
+            break
+    
     # Base case: if depth is 0 or the game is over
-    if depth == 0 or level_over():
-        return evaluate_table(table)
+    if depth == 0:
+        #print("EVAL: depth reached") #debugging
+        return evaluate_table(table), path
+    
+    if pig_escape(table, pig_position):
+        #print(f"EVAL: pig escaped: {pig_position}") #debugging
+        #print_table(table) #debugging
+        #pyautogui.sleep(1) #debugging
+        return evaluate_table(table), path
 
     # If it's the player's turn
     if maximizing:
         max_eval = -float('inf')
-        for move in legal_moves:
+        best_path = None
+        legal_moves = []
+        
+        for i in range(len(table)):
+            for j in range(len(table[i])):
+                if table[i][j] == 'E' and abs(i - pig_position[0]) <= 1:
+                    legal_moves.append((i, j))
+        
+        for move in legal_moves:            
             # Do the move
+            #table[move[0]][move[1]] = 'N' # debugging
+            #table[0][0] = str(depth) # debugging
+            #print_table(table) #debugging
             table[move[0]][move[1]] = 'B'
-            legal_moves.remove(move)
-            eval = minimax(table, legal_moves, depth - 1, alpha, beta, False)
+            #pyautogui.sleep(1) #debugging
+            eval_score, new_path = minimax(table, depth - 1, alpha, beta, False, path + [("B", move)])
             table[move[0]][move[1]] = 'E'
-            legal_moves.append(move)
             
             # Update the maximum evaluation
-            max_eval = max(max_eval, eval)
-            alpha = max(alpha, eval)
+            if eval_score > max_eval:
+                max_eval = eval_score
+                best_path = new_path
+            alpha = max(alpha, eval_score)
             if beta <= alpha:
                 break
-        return max_eval
+        return max_eval, best_path
     # If it's the pig's turn
     else:
         # Determine the pig's move
         pig_pos, move = pig_move(table)
         if move is None:
             # No moves available
-            return evaluate_table(table)
+            #print("EVAL: no moves") #debugging
+            return evaluate_table(table), path
         
         # Do the move
         table[pig_pos[0]][pig_pos[1]] = 'E'
         table[move[0]][move[1]] = 'P'
-        eval = minimax(table, legal_moves, depth - 1, alpha, beta, True)
+        eval_score, new_path = minimax(table, depth, alpha, beta, True, path + [("P", move)])
         table[move[0]][move[1]] = 'E'
         table[pig_pos[0]][pig_pos[1]] = 'P'
-        return eval
+        return eval_score, new_path

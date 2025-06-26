@@ -32,7 +32,6 @@ def main():
     # ------------------------- Gameplay Loop -------------------------
 
     if table:
-        
         pig_position = None
         for i in range(len(table)):
             for j in range(len(table[i])):
@@ -42,8 +41,16 @@ def main():
             if pig_position:
                 break
         
-        print_table(table)        
-        print(solve_level(table, 2, pig_position))
+        move, score = solve_level(table, 3, pig_position)     
+        print(move, score)
+        table[move[0]][move[1]] = 'N'
+        print_table(table)
+
+        if move:
+            row, col = move            
+            index = (row * 5) + col - 11 + ((row - 1) // 2)
+            if 0 <= index < len(hex_grid):
+                pyautogui.moveTo(hex_grid[index][0], hex_grid[index][1])
         
         """ round_start = True
         while True:
