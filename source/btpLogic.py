@@ -61,7 +61,7 @@ def solve_level(table, depth, pig_pos):
     legal_moves = []
     for i in range(len(table)):
         for j in range(len(table[i])):
-            if table[i][j] == 'E' and abs(i - pig_pos[0]) <= 1:
+            if table[i][j] == 'E' and abs(i - pig_pos[0]) <= 2:
                 legal_moves.append((i, j))
         
     for move in legal_moves:        
@@ -74,7 +74,7 @@ def solve_level(table, depth, pig_pos):
         table[move[0]][move[1]] = 'E'
 
         if table_value > best_value:
-            print("New best move found:", move, "with value:", table_value) #debugging
+            #print("New best move found:", move, "with value:", table_value) #debugging
             best_value = table_value
             best_move = move
             best_path = move_path

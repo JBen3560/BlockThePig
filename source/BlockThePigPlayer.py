@@ -1,7 +1,6 @@
 import pyautogui
 from btpLogic import check_instant_win, solve_level
-from utils import setup_hex_grid, setup_table, print_table
-
+from utils import setup_hex_grid, setup_table, print_table, get_depth
 
 def main():
     # ------------------------- Initialization -------------------------
@@ -41,7 +40,7 @@ def main():
             if pig_position:
                 break
         
-        move, score = solve_level(table, 3, pig_position)     
+        move, score = solve_level(table, get_depth(), pig_position)     
         print(move, score)
         table[move[0]][move[1]] = 'N'
         print_table(table)

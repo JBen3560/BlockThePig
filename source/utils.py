@@ -8,6 +8,10 @@ from colorama import Fore, init
 # - Consider combining the won and min distance algs in evaluate_table,
 #   depending on depth and how often the min distance seems to be used
 
+# This lets me change the depth in one place
+def get_depth():
+    return 5
+
 # Printing in color
 init(autoreset=True)
 color_map = {
@@ -122,7 +126,7 @@ def setup_table(hex_grid):
 
 
 # Evaluate the current state of the table
-def evaluate_table(table):
+def evaluate_table(table, depth):
     # Variables for whether the level is won or lost
     won = True
     lost = False
@@ -136,9 +140,6 @@ def evaluate_table(table):
                 break
         if pig_position:
             break
-    if not pig_position:
-        print("Pig not found in the table.")
-        return -9999
     
     # Level is won if the pig is boxed in
     visited = set()
@@ -168,10 +169,10 @@ def evaluate_table(table):
     # Evaluate based on won or lost
     if won:
         #print("Level won!") #debugging
-        return 9999
+        return 9999 + depth
     if lost:
         #print("Level lost!") #debugging
-        return -9999
+        return -9999 - depth
     
     # Otherwise, evaluate based on the closest 'X' to the pig
     eval_visited = set()
@@ -278,7 +279,7 @@ def pig_move(table):
     return (pig_position, move)
 
 
-# Minimax algorithm with alpha-beta pruning
+# Minimax algorithm
 def minimax(table, depth, alpha, beta, maximizing, path=None):
     if path is None:
         path = []
@@ -295,13 +296,13 @@ def minimax(table, depth, alpha, beta, maximizing, path=None):
     # Base case: if depth is 0 or the game is over
     if depth == 0:
         #print("EVAL: depth reached") #debugging
-        return evaluate_table(table), path
+        return evaluate_table(table, depth), path
     
     if pig_escape(table, pig_position):
         #print(f"EVAL: pig escaped: {pig_position}") #debugging
         #print_table(table) #debugging
         #pyautogui.sleep(1) #debugging
-        return evaluate_table(table), path
+        return evaluate_table(table, depth), path
 
     # If it's the player's turn
     if maximizing:
@@ -311,7 +312,7 @@ def minimax(table, depth, alpha, beta, maximizing, path=None):
         
         for i in range(len(table)):
             for j in range(len(table[i])):
-                if table[i][j] == 'E' and abs(i - pig_position[0]) <= 1:
+                if table[i][j] == 'E' and abs(i - pig_position[0]) <= 2:
                     legal_moves.append((i, j))
         
         for move in legal_moves:            
@@ -339,7 +340,7 @@ def minimax(table, depth, alpha, beta, maximizing, path=None):
         if move is None:
             # No moves available
             #print("EVAL: no moves") #debugging
-            return evaluate_table(table), path
+            return evaluate_table(table, depth), path
         
         # Do the move
         table[pig_pos[0]][pig_pos[1]] = 'E'
