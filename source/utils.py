@@ -4,7 +4,6 @@ from PIL import ImageGrab
 from colorama import Fore, init
 
 # TODO
-# - Consider removing alpha beta altogether
 # - Consider combining the won and min distance algs in evaluate_table,
 #   depending on depth and how often the min distance seems to be used
 
@@ -23,7 +22,6 @@ color_map = {
     'N': Fore.RED,
     'C': Fore.BLUE,
 }
-
 def print_table(table):
     print("   0  1  2  3  4  5  6  7  8  9  10 11")  # column headers
     for i, row in enumerate(table):
@@ -34,7 +32,6 @@ def print_table(table):
         print()  # new line after each row
 
 
-# Check if the level is over by looking for specific buttons     
 """ def level_over():
     # Check for continue button
     try:
@@ -49,15 +46,7 @@ def print_table(table):
         return True
     except pyautogui.ImageNotFoundException:
         return False """
-    
-def pig_escape(table, pig_position):
-    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, 1), (1, -1)]:
-        nr, nc = pig_position[0] + dr, pig_position[1] + dc
-        
-        if table[nr][nc] == 'X':
-            return True
-    return False
-        
+
 
 # Get a list of coordinates for the hexagonal grid
 def setup_hex_grid(first_hex, second_hex):
@@ -125,23 +114,19 @@ def setup_table(hex_grid):
     return table
 
 
-# Evaluate the current state of the table
-def evaluate_table(table, depth):
-    # Variables for whether the level is won or lost
-    won = True
-    lost = False
-    
-    # Find the pig
-    pig_position = None
-    for i in range(len(table)):
-        for j in range(len(table[i])):
-            if table[i][j] == 'P':
-                pig_position = (i, j)
-                break
-        if pig_position:
-            break
-    
-    # Level is won if the pig is boxed in
+# Check if the pig is adjacent to an 'X' block  
+def level_lost(table, pig_position):
+    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, 1), (1, -1)]:
+        nr, nc = pig_position[0] + dr, pig_position[1] + dc
+        
+        if table[nr][nc] == 'X':
+            return True
+        
+    return False
+        
+        
+# Check if the pig is boxed in
+def level_won(table, pig_position):
     visited = set()
     queue = deque([pig_position])
     visited.add(pig_position)
@@ -151,8 +136,7 @@ def evaluate_table(table, depth):
 
         # If we can reach an 'X', pig is NOT boxed in
         if table[r][c] == 'X':
-            won = False
-            break
+            return False
 
         # Explore 6-directionally
         for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, 1), (1, -1)]:
@@ -163,18 +147,11 @@ def evaluate_table(table, depth):
                 visited.add((nr, nc))
                 queue.append((nr, nc))
                 
-    # Level is lost if the pig is adjacent to an X
-    lost = pig_escape(table, pig_position)
+    return True
 
-    # Evaluate based on won or lost
-    if won:
-        #print("Level won!") #debugging
-        return 9999 + depth
-    if lost:
-        #print("Level lost!") #debugging
-        return -9999 - depth
-    
-    # Otherwise, evaluate based on the closest 'X' to the pig
+
+# Evaluate the current state of the table based on the distance to the nearest 'X'
+def evaluate_table(table, depth, pig_position):
     eval_visited = set()
     eval_queue = deque([(pig_position, 0)])  # position, distance
     eval_visited.add(pig_position)
@@ -193,7 +170,6 @@ def evaluate_table(table, depth):
                 eval_visited.add((nr, nc))
                 eval_queue.append(((nr, nc), dist + 1))
     
-    #print(f"Distance evaluated: {min_distance}") #debugging
     return min_distance
 
 
@@ -293,10 +269,15 @@ def minimax(table, depth, maximizing, path=None):
         if pig_position:
             break
     
-    # Base case: if depth is 0 or the game is over
-    if depth == 0 or pig_escape(table, pig_position) :
-        #print("EVAL: depth reached") #debugging
-        return evaluate_table(table, depth), path
+    # Base cases
+    if level_lost(table, pig_position):
+        return (-9999 - depth), path
+    
+    if level_won(table, pig_position):
+        return (9999 + depth), path
+    
+    if depth == 0:
+        return evaluate_table(table, depth, pig_position), path
 
     # If it's the player's turn
     if maximizing:
@@ -311,11 +292,7 @@ def minimax(table, depth, maximizing, path=None):
         
         for move in legal_moves:            
             # Do the move
-            #table[move[0]][move[1]] = 'N' # debugging
-            #table[0][0] = str(depth) # debugging
-            #print_table(table) #debugging
             table[move[0]][move[1]] = 'B'
-            #pyautogui.sleep(1) #debugging
             eval_score, new_path = minimax(table, depth - 1, False, path + [("B", move)])
             table[move[0]][move[1]] = 'E'
             
@@ -330,7 +307,6 @@ def minimax(table, depth, maximizing, path=None):
         pig_pos, move = pig_move(table)
         if move is None:
             # No moves available
-            #print("EVAL: no moves") #debugging
             return evaluate_table(table, depth), path
         
         # Do the move

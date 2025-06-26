@@ -65,11 +65,7 @@ def solve_level(table, depth, pig_pos, hex_grid):
                 legal_moves.append((i, j))
         
     for move in legal_moves:        
-        #table[move[0]][move[1]] = 'C' # debugging
-        #table[0][0] = str(depth) # debugging
-        #print_table(table) #debugging
         table[move[0]][move[1]] = 'B'
-        #pyautogui.sleep(1) #debugging
         table_value, move_path = minimax(table, depth - 1, False, path=[("B", move)])
         table[move[0]][move[1]] = 'E'
 
@@ -78,8 +74,6 @@ def solve_level(table, depth, pig_pos, hex_grid):
             best_value = table_value
             best_move = move
             best_path = move_path
-            if best_value >= 1000:
-                break
 
     print("\nBest path trace:")
     print(best_path)
