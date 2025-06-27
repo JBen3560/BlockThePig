@@ -10,7 +10,7 @@ from colorama import Fore, init
 
 # This lets me change the depth in one place
 def get_depth():
-    return 4
+    return 5
 
 # Printing in color
 init(autoreset=True)
@@ -272,38 +272,36 @@ def minimax(table, depth, maximizing, path=None):
     
     # Base cases
     if level_lost(table, pig_position):
-        return (-9999 - depth), path, False
+        return (-9999 - depth), path
     
     if level_won(table, pig_position):
-        return (9999 + depth), path, True
+        return (9999 + depth), path
     
     if depth == 0:
-        return evaluate_table(table, depth, pig_position), path, False
+        return evaluate_table(table, depth, pig_position), path
 
     # If it's the player's turn
     if maximizing:
         max_eval = -float('inf')
         best_path = None
-        best_path_won = False
         legal_moves = []
         
         for i in range(len(table)):
             for j in range(len(table[i])):
-                if table[i][j] == 'E' and abs(i - pig_position[0]) <= 3:
+                if table[i][j] == 'E' and abs(i - pig_position[0]) <= 4:
                     legal_moves.append((i, j))
         
         for move in legal_moves:                        
             # Do the move
             table[move[0]][move[1]] = 'B'
-            eval_score, new_path, won = minimax(table, depth - 1, False, path + [("B", move)])
+            eval_score, new_path = minimax(table, depth - 1, False, path + [("B", move)])
             table[move[0]][move[1]] = 'E'
             
             # Update the maximum evaluation
             if eval_score > max_eval:
                 max_eval = eval_score
                 best_path = new_path
-                best_path_won = won
-        return max_eval, best_path, best_path_won
+        return max_eval, best_path
     # If it's the pig's turn
     else:
         # Determine the pig's move
@@ -315,7 +313,7 @@ def minimax(table, depth, maximizing, path=None):
         # Do the move
         table[pig_pos[0]][pig_pos[1]] = 'E'
         table[move[0]][move[1]] = 'P'
-        eval_score, new_path, won = minimax(table, depth, True, path + [("P", move)])
+        eval_score, new_path = minimax(table, depth, True, path + [("P", move)])
         table[move[0]][move[1]] = 'E'
         table[pig_pos[0]][pig_pos[1]] = 'P'
-        return eval_score, new_path, won
+        return eval_score, new_path

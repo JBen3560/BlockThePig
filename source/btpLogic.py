@@ -16,7 +16,7 @@ def analyze_screen():
         location2 = pyautogui.locateOnScreen('.\\images\\secondHex.png', confidence=0.7)
     except pyautogui.ImageNotFoundException:
         print("Could not recognize the grid.")
-        exit(1)
+        return None, None
     
     # If the corner is found, set up the hex grid
     if location1 and location2:
@@ -50,26 +50,29 @@ def check_instant_win(pos_list):
             empty_at_start.append(i)
     
     # If there are 3 or more blocks around the pig, place in empty spaces
-    if len(block_at_start) >= 3:
+    if len(block_at_start) == 3:
         for i in empty_at_start:
             pyautogui.moveTo(pos_list[i])
             pyautogui.click()
+        return True
     
     # If there were 4 or more blocks around the pig, place extras
     if len(block_at_start) >= 4:
-        pyautogui.useImageNotFoundException()
+        for i in empty_at_start:
+            pyautogui.moveTo(pos_list[i])
+            pyautogui.click()
         extra_placement = 0
         while True:
             # Check for continue button
             try:
-                pyautogui.locateOnScreen('.\\images\\continue.png', confidence=0.8)
+                pyautogui.locateOnScreen('.\\images\\continue.png', confidence=0.7)
                 return True
             except pyautogui.ImageNotFoundException:
                 pass
             
             # Check for try again button
             try:
-                pyautogui.locateOnScreen('.\\images\\try_again.png', confidence=0.8)
+                pyautogui.locateOnScreen('.\\images\\try_again.png', confidence=0.7)
                 return True
             except pyautogui.ImageNotFoundException:
                 pyautogui.moveTo(pos_list[extra_placement])
@@ -84,7 +87,6 @@ def solve_level(table, depth, pig_pos):
     best_move = None
     best_value = -float('inf')
     best_path = []
-    best_path_won = False
 
     # Figure out all legal moves
     legal_moves = []
@@ -95,13 +97,12 @@ def solve_level(table, depth, pig_pos):
         
     for move in legal_moves:        
         table[move[0]][move[1]] = 'B'
-        table_value, move_path, won = minimax(table, depth - 1, False, path=[("B", move)])
+        table_value, move_path = minimax(table, depth - 1, False, path=[("B", move)])
         table[move[0]][move[1]] = 'E'
 
         if table_value > best_value:
             best_value = table_value
             best_move = move
             best_path = move_path
-            best_path_won = won
     
-    return best_move, best_value, best_path, best_path_won
+    return best_move, best_value, best_path
