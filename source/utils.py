@@ -213,13 +213,12 @@ def pig_move(table):
     if len(x_positions) == 0:
         return (pig_position, None)
     elif len(x_positions) > 1:
-        # Sort by distance, then whether row is 0 or 12 (preferred), then left/right, then row
         x_positions.sort(
             key=lambda pos: (
-                pos[1],                               
-                0 if pos[0][0] in (0, 12) else 1,     
-                0 if pos[0][1] < 6 else 1,                            
-                pos[0][0]                             
+                pos[1], # short over long distance                          
+                0 if pos[0][0] in (0, 12) else 1, # top/bottom over edge
+                0 if pos[0][1] < 6 else 1, # left over right
+                pos[0][0] # high over low row
             )
         )
         goal = x_positions[0][0]

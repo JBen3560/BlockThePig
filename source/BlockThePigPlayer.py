@@ -10,7 +10,7 @@ from utils import print_table, get_depth
 def main():    
     pyautogui.FAILSAFE = True
     turn = 1
-    no_prune = False
+    post_abort = False
     while True:
         print(f"\n\n----- Turn {turn} -----")
         level_over = False
@@ -34,12 +34,14 @@ def main():
                         
         # Use minimax to find the best move
         if not level_over:
-            # Don't think too much at the start
-            if turn <= 3:
-                move, value, path = solve_level(table, get_depth()*3//4, pig_position, no_prune)
-            else:
-                move, value, path = solve_level(table, get_depth(), pig_position, no_prune)
-            no_prune = False
+            # Adjust depth at the start or if a winning path was aborted
+            curr_depth = get_depth()
+            if turn <= 3 or post_abort:
+                curr_depth = curr_depth*3//4
+
+            # Solve the level with the current depth and pig position
+            move, value, path = solve_level(table, curr_depth, pig_position, post_abort)
+            post_abort = False
             
             # If the move is valid, update the table and print it
             table[move[0]][move[1]] = 'N'
@@ -81,7 +83,7 @@ def main():
                             row, col = pos
                             index = (row * 5) + col - 11 + ((row - 1) // 2)
                             pyautogui.moveTo(pos_list[index][0], pos_list[index][1])
-                            no_prune = True
+                            post_abort = True
                             break
                         
                         pyautogui.sleep(0.1)
