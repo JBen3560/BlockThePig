@@ -10,9 +10,10 @@ from utils import print_table, get_depth
 def main():    
     pyautogui.FAILSAFE = True
     turn = 1
-    level_over = False
+    no_prune = False
     while True:
         print(f"\n\n----- Turn {turn} -----")
+        level_over = False
         
         # Analyze the screen and find the pig
         pig_position = None
@@ -35,10 +36,11 @@ def main():
         if not level_over:
             # Don't think too much at the start
             if turn <= 3:
-                move, value, path = solve_level(table, get_depth()*3//4, pig_position)
+                move, value, path = solve_level(table, get_depth()*3//4, pig_position, no_prune)
             else:
-                move, value, path = solve_level(table, get_depth(), pig_position)
-
+                move, value, path = solve_level(table, get_depth(), pig_position, no_prune)
+            no_prune = False
+            
             # If the move is valid, update the table and print it
             table[move[0]][move[1]] = 'N'
             print_table(table)
@@ -50,8 +52,8 @@ def main():
             print(f"Final score: {value}\n")
             print(move, value)
 
-            # If the path is winning (and probably right), do the path
-            if (value == 9999 and turn > 3) or (value > 9999 and turn > 2):                
+            # If the path is winning, do the path
+            if (value >= 9999 and turn >= 3):                
                 # Execute each step
                 for step_type, pos in path:
                     if step_type == "B":
@@ -79,6 +81,7 @@ def main():
                             row, col = pos
                             index = (row * 5) + col - 11 + ((row - 1) // 2)
                             pyautogui.moveTo(pos_list[index][0], pos_list[index][1])
+                            no_prune = True
                             break
                         
                         pyautogui.sleep(0.1)
@@ -89,11 +92,7 @@ def main():
                 index = (row * 5) + col - 11 + ((row - 1) // 2)
                 if 0 <= index < len(pos_list):
                     pyautogui.moveTo(pos_list[index][0], pos_list[index][1])
-                    pyautogui.click()
-                    
-            # If that was the winning move, set level_over to True
-            if value >= 9999 and len(path) <= 1:
-                level_over = True                
+                    pyautogui.click()              
                     
         # Find the buttons
         try:
@@ -101,7 +100,6 @@ def main():
             if cont:
                 pyautogui.moveTo(cont,duration=0.1)
                 pyautogui.click()
-                level_over = False
                 turn = 0
                 pyautogui.sleep(1.5)
         except pyautogui.ImageNotFoundException:
@@ -112,7 +110,6 @@ def main():
             if fail:
                 pyautogui.moveTo(fail,duration=0.1)
                 pyautogui.click()
-                level_over = False
                 turn = 0
                 pyautogui.sleep(1.5)
         except pyautogui.ImageNotFoundException:

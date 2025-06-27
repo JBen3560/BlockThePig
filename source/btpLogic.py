@@ -82,7 +82,7 @@ def check_instant_win(pos_list):
     # If there's nothing to do, return False
     return False
 
-def solve_level(table, depth, pig_pos):
+def solve_level(table, depth, pig_pos, no_prune):
     # Setup
     best_move = None
     best_value = -float('inf')
@@ -105,8 +105,9 @@ def solve_level(table, depth, pig_pos):
             best_move = move
             best_path = move_path
             
-            # Primitive pruning
-            if best_value >= get_depth():
+            # Simple pruning
+            if best_value >= get_depth() and not no_prune:
+                print("PRUNE")
                 break
     
     return best_move, best_value, best_path
