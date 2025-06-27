@@ -4,6 +4,7 @@ from PIL import ImageGrab
 from colorama import Fore, init
 
 # TODO
+# - Don't prioritize by column, but rather by the left have vs the right half
 # - Consider combining the won and min distance algs in evaluate_table,
 #   depending on depth and how often the min distance seems to be used
 
@@ -213,12 +214,12 @@ def pig_move(table):
     if len(x_positions) == 0:
         return (pig_position, None)
     elif len(x_positions) > 1:
-        # Sort by distance, then whether row is 0 or 12 (preferred), then col, then row
+        # Sort by distance, then whether row is 0 or 12 (preferred), then left/right, then row
         x_positions.sort(
             key=lambda pos: (
                 pos[1],                               
                 0 if pos[0][0] in (0, 12) else 1,     
-                pos[0][1],                            
+                0 if pos[0][1] < 6 else 1,                            
                 pos[0][0]                             
             )
         )
@@ -288,7 +289,7 @@ def minimax(table, depth, maximizing, path=None):
         
         for i in range(len(table)):
             for j in range(len(table[i])):
-                if table[i][j] == 'E' and abs(i - pig_position[0]) <= 2:
+                if table[i][j] == 'E' and abs(i - pig_position[0]) <= 3:
                     legal_moves.append((i, j))
         
         for move in legal_moves:                        

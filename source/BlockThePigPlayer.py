@@ -24,14 +24,16 @@ def main():
             
             move, value, path, won = solve_level(table, get_depth(), pig_position)     
             
+            table[move[0]][move[1]] = 'N'
+            print_table(table)
+            
             print("\nBest path trace:")
             print(path)
             for step_type, pos in path:
                 print(f"{step_type} → {pos}")
             print(f"Final score: {value}\n")
             print(move, value, won)
-            table[move[0]][move[1]] = 'N'
-            print_table(table)
+            
 
             if move:
                 row, col = move
