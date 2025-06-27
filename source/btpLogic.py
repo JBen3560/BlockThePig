@@ -1,19 +1,47 @@
 import pyautogui
 from PIL import ImageGrab
-from utils import minimax, print_table
+from utils import minimax, setup_pos_list, setup_table
+ 
+# Translate the screen into a position list and a table
+def analyze_screen():
+    # Variables
+    location1 = None
+    location2 = None
+    pos_list = []
+    table = []
+    
+    # Try to find the top corner
+    try:
+        location1 = pyautogui.locateOnScreen('.\\images\\firstHex.png', confidence=0.7)
+        location2 = pyautogui.locateOnScreen('.\\images\\secondHex.png', confidence=0.7)
+    except pyautogui.ImageNotFoundException:
+        print("Could not recognize the grid.")
+        exit(1)
+    
+    # If the corner is found, set up the hex grid
+    if location1 and location2:
+        bottom_right1 = (location1.left + location1.width, location1.top + location1.height)
+        bottom_right2 = (location2.left + location2.width, location2.top + location2.height)
+        pos_list = setup_pos_list(bottom_right1, bottom_right2)
+        
+    # Set up the table with the game state
+    if pos_list:
+        table = setup_table(pos_list)
+        
+    return pos_list, table
 
 # Check whether the game can be won in opening placements
-def check_instant_win(hex_grid):
+def check_instant_win(pos_list):
     # Setup
     screenshot = ImageGrab.grab()
-    temp_hex_grid = hex_grid.copy()
+    temp_pos_list = pos_list.copy()
     empty_at_start = []
     block_at_start = []
     
     # See how many blocks start around the pig
     list_to_check = [22,23,26,28,32,33]
     for i in list_to_check:
-        hex = temp_hex_grid[i]
+        hex = temp_pos_list[i]
         screenshot_pixel = screenshot.getpixel((hex[0], hex[1]))
         r, g, b = screenshot_pixel[:3]
         if abs(r - g) < 15 and abs(g - b) < 15:
@@ -24,7 +52,7 @@ def check_instant_win(hex_grid):
     # If there are 3 or more blocks around the pig, place in empty spaces
     if len(block_at_start) >= 3:
         for i in empty_at_start:
-            pyautogui.moveTo(hex_grid[i])
+            pyautogui.moveTo(pos_list[i])
             pyautogui.click()
     
     # If there were 4 or more blocks around the pig, place extras
@@ -44,18 +72,19 @@ def check_instant_win(hex_grid):
                 pyautogui.locateOnScreen('.\\images\\try_again.png', confidence=0.8)
                 return True
             except pyautogui.ImageNotFoundException:
-                pyautogui.moveTo(hex_grid[extra_placement])
+                pyautogui.moveTo(pos_list[extra_placement])
                 pyautogui.click()
                 extra_placement += 1
     
     # If there's nothing to do, return False
     return False
 
-def solve_level(table, depth, pig_pos, hex_grid):
+def solve_level(table, depth, pig_pos):
     # Setup
     best_move = None
     best_value = -float('inf')
     best_path = []
+    best_path_won = False
 
     # Figure out all legal moves
     legal_moves = []
@@ -66,31 +95,13 @@ def solve_level(table, depth, pig_pos, hex_grid):
         
     for move in legal_moves:        
         table[move[0]][move[1]] = 'B'
-        table_value, move_path = minimax(table, depth - 1, False, path=[("B", move)])
+        table_value, move_path, won = minimax(table, depth - 1, False, path=[("B", move)])
         table[move[0]][move[1]] = 'E'
 
         if table_value > best_value:
-            #print("New best move found:", move, "with value:", table_value) #debugging
             best_value = table_value
             best_move = move
             best_path = move_path
-
-    print("\nBest path trace:")
-    print(best_path)
-    for step_type, pos in best_path:
-        print(f"{step_type} → {pos}")
-    print(f"Final score: {best_value}\n")
-
-    print(best_move, best_value)
-    table[best_move[0]][best_move[1]] = 'N'
-    print_table(table)
-
-    if best_move:
-        row, col = best_move
-        index = (row * 5) + col - 11 + ((row - 1) // 2)
-        if 0 <= index < len(hex_grid):
-            pyautogui.moveTo(hex_grid[index][0], hex_grid[index][1])
+            best_path_won = won
     
-    
-    
-    return (best_move, best_value) # change this to actually place the block
+    return best_move, best_value, best_path, best_path_won

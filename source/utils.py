@@ -9,7 +9,7 @@ from colorama import Fore, init
 
 # This lets me change the depth in one place
 def get_depth():
-    return 5
+    return 4
 
 # Printing in color
 init(autoreset=True)
@@ -49,8 +49,8 @@ def print_table(table):
 
 
 # Get a list of coordinates for the hexagonal grid
-def setup_hex_grid(first_hex, second_hex):
-    hex_grid = []
+def setup_pos_list(first_hex, second_hex):
+    pos_list = []
     point = [first_hex[0], first_hex[1]]
     increment = second_hex[0] - first_hex[0]
     offset = increment * 0.5
@@ -69,17 +69,17 @@ def setup_hex_grid(first_hex, second_hex):
         # Input a row
         for j in range(0,5):
             new_point = point.copy()
-            hex_grid.append(new_point)
+            pos_list.append(new_point)
             point[0] += increment
 
         # Increase the y value
         point[1] += drop
     
-    return hex_grid
+    return pos_list
 
 
 # Populate the table with what's in each position of the grid
-def setup_table(hex_grid):
+def setup_table(pos_list):
     # Default table
     table = [['-', '-', '-', '-', '-', '-', 'X', 'X', 'X', 'X', 'X', 'X'],
              ['-', '-', '-', '-', '-', 'X', 'E', 'E', 'E', 'E', 'E', 'X'],
@@ -97,11 +97,11 @@ def setup_table(hex_grid):
     
     # Populate the table with blocks and the pig
     screenshot = ImageGrab.grab()
-    temp_hex_grid = hex_grid.copy()
+    temp_pos_list = pos_list.copy()
     for i in range(len(table)):
         for j in range(len(table[i])):
             if table[i][j] == 'E':
-                hex = temp_hex_grid.pop(0)
+                hex = temp_pos_list.pop(0)
                 screenshot_pixel = screenshot.getpixel((hex[0], hex[1]))
                 r, g, b = screenshot_pixel[:3]
                 # Block
@@ -271,18 +271,19 @@ def minimax(table, depth, maximizing, path=None):
     
     # Base cases
     if level_lost(table, pig_position):
-        return (-9999 - depth), path
+        return (-9999 - depth), path, False
     
     if level_won(table, pig_position):
-        return (9999 + depth), path
+        return (9999 + depth), path, True
     
     if depth == 0:
-        return evaluate_table(table, depth, pig_position), path
+        return evaluate_table(table, depth, pig_position), path, False
 
     # If it's the player's turn
     if maximizing:
         max_eval = -float('inf')
         best_path = None
+        best_path_won = False
         legal_moves = []
         
         for i in range(len(table)):
@@ -290,29 +291,30 @@ def minimax(table, depth, maximizing, path=None):
                 if table[i][j] == 'E' and abs(i - pig_position[0]) <= 2:
                     legal_moves.append((i, j))
         
-        for move in legal_moves:            
+        for move in legal_moves:                        
             # Do the move
             table[move[0]][move[1]] = 'B'
-            eval_score, new_path = minimax(table, depth - 1, False, path + [("B", move)])
+            eval_score, new_path, won = minimax(table, depth - 1, False, path + [("B", move)])
             table[move[0]][move[1]] = 'E'
             
             # Update the maximum evaluation
             if eval_score > max_eval:
                 max_eval = eval_score
                 best_path = new_path
-        return max_eval, best_path
+                best_path_won = won
+        return max_eval, best_path, best_path_won
     # If it's the pig's turn
     else:
         # Determine the pig's move
         pig_pos, move = pig_move(table)
         if move is None:
             # No moves available
-            return evaluate_table(table, depth), path
+            return evaluate_table(table, depth), path, False
         
         # Do the move
         table[pig_pos[0]][pig_pos[1]] = 'E'
         table[move[0]][move[1]] = 'P'
-        eval_score, new_path = minimax(table, depth, True, path + [("P", move)])
+        eval_score, new_path, won = minimax(table, depth, True, path + [("P", move)])
         table[move[0]][move[1]] = 'E'
         table[pig_pos[0]][pig_pos[1]] = 'P'
-        return eval_score, new_path
+        return eval_score, new_path, won
