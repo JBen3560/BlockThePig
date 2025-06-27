@@ -35,7 +35,7 @@ def main():
         if not level_over:
             # Don't think too much at the start
             if turn <= 3:
-                move, value, path = solve_level(table, get_depth()-1, pig_position)
+                move, value, path = solve_level(table, get_depth()*3//4, pig_position)
             else:
                 move, value, path = solve_level(table, get_depth(), pig_position)
 

@@ -1,6 +1,6 @@
 import pyautogui
 from PIL import ImageGrab
-from utils import minimax, setup_pos_list, setup_table
+from utils import minimax, setup_pos_list, setup_table, get_depth
  
 # Translate the screen into a position list and a table
 def analyze_screen():
@@ -104,5 +104,9 @@ def solve_level(table, depth, pig_pos):
             best_value = table_value
             best_move = move
             best_path = move_path
+            
+            # Primitive pruning
+            if best_value >= get_depth():
+                break
     
     return best_move, best_value, best_path

@@ -9,7 +9,7 @@ from colorama import Fore, init
 
 # This lets me change the depth in one place
 def get_depth():
-    return 5
+    return 6
 
 # Printing in color
 init(autoreset=True)
@@ -287,7 +287,7 @@ def minimax(table, depth, maximizing, path=None):
         
         for i in range(len(table)):
             for j in range(len(table[i])):
-                if table[i][j] == 'E' and abs(i - pig_position[0]) <= 4:
+                if table[i][j] == 'E' and abs(i - pig_position[0]) <= 3:
                     legal_moves.append((i, j))
         
         for move in legal_moves:                        
