@@ -230,7 +230,7 @@ def pig_move(table):
     move = None
     move_visited = set()
     move_queue = deque()
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, 1), (1, -1)]
+    directions = [(1, 0), (1, -1), (0, -1), (-1, 0), (0, 1), (-1, 1)]
     
     move_queue.append([pig_position])
     move_visited.add(pig_position)

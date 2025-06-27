@@ -1,6 +1,7 @@
 import pyautogui
 from btpLogic import analyze_screen, check_instant_win, solve_level
 from utils import print_table, get_depth
+from colorama import Fore
 
 # TODO possible issues
 # 1. Check each pig movement of the winning plan to make sure it keeps lining up
@@ -10,6 +11,7 @@ from utils import print_table, get_depth
 def main():    
     pyautogui.FAILSAFE = True
     turn = 1
+    level = 1
     post_abort = False
     while True:
         print(f"\n\n----- Turn {turn} -----")
@@ -37,7 +39,9 @@ def main():
             # Adjust depth at the start or if a winning path was aborted
             curr_depth = get_depth()
             if turn <= 3 or post_abort:
-                curr_depth = curr_depth*3//4
+                curr_depth -= 1
+                if post_abort:
+                    curr_depth -= 1
 
             # Solve the level with the current depth and pig position
             move, value, path = solve_level(table, curr_depth, pig_position, post_abort)
@@ -100,9 +104,10 @@ def main():
         try:
             cont = pyautogui.locateOnScreen('.\\images\\continue.png', confidence=0.7)
             if cont:
-                pyautogui.moveTo(cont,duration=0.1)
+                pyautogui.moveTo(cont,duration=0.2)
                 pyautogui.click()
                 turn = 0
+                level += 1
                 pyautogui.sleep(1.5)
         except pyautogui.ImageNotFoundException:
             pass        
@@ -113,6 +118,8 @@ def main():
                 pyautogui.moveTo(fail,duration=0.1)
                 pyautogui.click()
                 turn = 0
+                print(Fore.RED + "\n\nLasted for", level, "levels!\n\n" + Fore.RESET)
+                level = 1
                 pyautogui.sleep(1.5)
         except pyautogui.ImageNotFoundException:
             pass

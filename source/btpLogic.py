@@ -92,7 +92,7 @@ def solve_level(table, depth, pig_pos, post_abort):
     legal_moves = []
     for i in range(len(table)):
         for j in range(len(table[i])):
-            if table[i][j] == 'E' and abs(i - pig_pos[0]) <= 3:
+            if table[i][j] == 'E' and abs(i - pig_pos[0]) <= 4:
                 legal_moves.append((i, j))
         
     for move in legal_moves:        
