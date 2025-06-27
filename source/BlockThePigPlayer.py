@@ -2,9 +2,10 @@ import pyautogui
 from btpLogic import analyze_screen, check_instant_win, solve_level
 from utils import print_table, get_depth
 
-# TODO
-# - Handle the case where it finds a win but can't reach the last placement
-#   (if that can happen)
+# TODO possible issues
+# 1. Check each pig movement of the winning plan to make sure it keeps lining up
+# 2. Make sure the "Place X blocks more blocks" doesn't mess stuff up
+# 3. Put alpha pruning back in or something
 
 def main():    
     pyautogui.FAILSAFE = True
@@ -17,13 +18,14 @@ def main():
         pig_position = None
         while not pig_position:
             pos_list, table = analyze_screen()
-            for i in range(len(table)):
-                for j in range(len(table[i])):
-                    if table[i][j] == 'P':
-                        pig_position = (i, j)
+            if pos_list and table:
+                for i in range(len(table)):
+                    for j in range(len(table[i])):
+                        if table[i][j] == 'P':
+                            pig_position = (i, j)
+                            break
+                    if pig_position:
                         break
-                if pig_position:
-                    break
         
         # Check whether the level can be won in the opening blocks
         if turn == 1:
@@ -31,16 +33,18 @@ def main():
                         
         # Use minimax to find the best move
         if not level_over:
-            # Get the best move, value, path, and whether the level is won
-            move, value, path = solve_level(table, get_depth(), pig_position)     
-            
+            # Don't think too much at the start
+            if turn <= 3:
+                move, value, path = solve_level(table, get_depth()-1, pig_position)
+            else:
+                move, value, path = solve_level(table, get_depth(), pig_position)
+
             # If the move is valid, update the table and print it
             table[move[0]][move[1]] = 'N'
             print_table(table)
             
             # Print the best path trace
             print("\nBest path trace:")
-            print(path)
             for step_type, pos in path:
                 print(f"{step_type} → {pos}")
             print(f"Final score: {value}\n")
@@ -56,15 +60,28 @@ def main():
                         pyautogui.moveTo(pos_list[index][0], pos_list[index][1])
                         pyautogui.click()
                     elif step_type == "P":
-                        pyautogui.sleep(0.4)
+                        pig_position = None
+                        while not pig_position:
+                            pos_list, table = analyze_screen()
+                            if pos_list and table:
+                                for i in range(len(table)):
+                                    for j in range(len(table[i])):
+                                        if table[i][j] == 'P':
+                                            pig_position = (i, j)
+                                            break
+                                    if pig_position:
+                                        break
                         
-                # If it worked, end the level
-                try:
-                    cont = pyautogui.locateOnScreen('.\\images\\continue.png', confidence=0.7)
-                    if cont:
-                        level_over = True
-                except pyautogui.ImageNotFoundException:
-                    pass
+                        # Abort if things aren't as planned
+                        print("pig moves",pig_position, pos) 
+                        if pig_position != pos:
+                            print("ABORT")
+                            row, col = pos
+                            index = (row * 5) + col - 11 + ((row - 1) // 2)
+                            pyautogui.moveTo(pos_list[index][0], pos_list[index][1])
+                            break
+                        
+                        pyautogui.sleep(0.1)
             
             # If the path is not winning, do the move
             else:

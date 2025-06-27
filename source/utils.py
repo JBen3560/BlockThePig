@@ -1,4 +1,3 @@
-import pyautogui
 from collections import deque
 from PIL import ImageGrab
 from colorama import Fore, init
