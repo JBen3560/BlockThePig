@@ -1,12 +1,7 @@
 import pyautogui
+from colorama import Fore
 from btpLogic import analyze_screen, check_instant_win, solve_level
 from utils import print_table, get_depth
-from colorama import Fore
-
-# TODO possible issues
-# 1. Check each pig movement of the winning plan to make sure it keeps lining up
-# 2. Make sure the "Place X blocks more blocks" doesn't mess stuff up
-# 3. Put alpha pruning back in or something
 
 def main():    
     pyautogui.FAILSAFE = True
@@ -58,15 +53,16 @@ def main():
             print(f"Final score: {value}\n")
             print(move, value)
 
-            # If the path is winning, do the path
+            # If the path is winning, do the whole path
             if (value >= 9999 and turn >= 3):                
-                # Execute each step
                 for step_type, pos in path:
+                    # Place block on player turn
                     if step_type == "B":
                         row, col = pos
                         index = (row * 5) + col - 11 + ((row - 1) // 2)
                         pyautogui.moveTo(pos_list[index][0], pos_list[index][1])
                         pyautogui.click()
+                    # Make sure the pig is in the expected place on its turn
                     elif step_type == "P":
                         pig_position = None
                         while not pig_position:
@@ -80,8 +76,8 @@ def main():
                                     if pig_position:
                                         break
                         
-                        # Abort if things aren't as planned
-                        print("pig moves",pig_position, pos) 
+                        # Abort path if things aren't as planned
+                        print("Pig expected:",pos,"Pig actual:",pig_position) 
                         if pig_position != pos:
                             print("ABORT")
                             row, col = pos
@@ -92,7 +88,7 @@ def main():
                         
                         pyautogui.sleep(0.1)
             
-            # If the path is not winning, do the move
+            # If the path is not winning, just do the first move
             else:
                 row, col = move
                 index = (row * 5) + col - 11 + ((row - 1) // 2)
@@ -100,7 +96,7 @@ def main():
                     pyautogui.moveTo(pos_list[index][0], pos_list[index][1])
                     pyautogui.click()              
                     
-        # Find the buttons
+        # Check whether the level is over
         try:
             cont = pyautogui.locateOnScreen('.\\images\\continue.png', confidence=0.7)
             if cont:
@@ -118,7 +114,7 @@ def main():
                 pyautogui.moveTo(fail,duration=0.1)
                 pyautogui.click()
                 turn = 0
-                print(Fore.RED + "\n\nLasted for", level, "levels!\n\n" + Fore.RESET)
+                print(Fore.RED + "\n\nLasted for", level, Fore.RED + "levels!\n\n")
                 level = 1
                 pyautogui.sleep(1.5)
         except pyautogui.ImageNotFoundException:

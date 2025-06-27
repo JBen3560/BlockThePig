@@ -30,6 +30,7 @@ def analyze_screen():
         
     return pos_list, table
 
+
 # Check whether the game can be won in opening placements
 def check_instant_win(pos_list):
     # Setup
@@ -49,30 +50,25 @@ def check_instant_win(pos_list):
         else:
             empty_at_start.append(i)
     
-    # If there are 3 or more blocks around the pig, place in empty spaces
+    # If there are 3 blocks around the pig, block empty spaces
     if len(block_at_start) == 3:
         for i in empty_at_start:
             pyautogui.moveTo(pos_list[i])
             pyautogui.click()
         return True
     
-    # If there were 4 or more blocks around the pig, place extras
+    # If there are 4 or more blocks around the pig, also place extras
     if len(block_at_start) >= 4:
+        # Surround the pig
         for i in empty_at_start:
             pyautogui.moveTo(pos_list[i])
             pyautogui.click()
         extra_placement = 0
+        
+        # Place extras until the continue button appears
         while True:
-            # Check for continue button
             try:
                 pyautogui.locateOnScreen('.\\images\\continue.png', confidence=0.7)
-                return True
-            except pyautogui.ImageNotFoundException:
-                pass
-            
-            # Check for try again button
-            try:
-                pyautogui.locateOnScreen('.\\images\\try_again.png', confidence=0.7)
                 return True
             except pyautogui.ImageNotFoundException:
                 pyautogui.moveTo(pos_list[extra_placement])
@@ -82,6 +78,8 @@ def check_instant_win(pos_list):
     # If there's nothing to do, return False
     return False
 
+
+# Solve the level using the minimax algorithm
 def solve_level(table, depth, pig_pos, post_abort):
     # Setup
     best_move = None
@@ -94,12 +92,15 @@ def solve_level(table, depth, pig_pos, post_abort):
         for j in range(len(table[i])):
             if table[i][j] == 'E' and abs(i - pig_pos[0]) <= 4:
                 legal_moves.append((i, j))
-        
+    
+    # Try all legal moves
+    print("Starting depth:", depth)
     for move in legal_moves:        
         table[move[0]][move[1]] = 'B'
         table_value, move_path = minimax(table, depth - 1, False, path=[("B", move)])
         table[move[0]][move[1]] = 'E'
 
+        # Keep track of the best move/path
         if table_value > best_value:
             best_value = table_value
             best_move = move
