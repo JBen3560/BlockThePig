@@ -16,7 +16,7 @@ An automated [Block the Pig](https://www.coolmathgames.com/0-block-the-pig#immer
 
 2. **Table Setup:** Builds a 2D representation of the game grid.
 
-![table]()
+![table](https://github.com/JBen3560/BlockThePig/blob/main/readme%20media/table.png)
 
 3. **Solver Algorithm**
 - Runs minimax with pruning based on depth and game state
@@ -43,14 +43,14 @@ pip install -r requirements.txt
 ## Usage
 1. **Adjust the Window size:** While the program uses reference images to automatically position itself on the game board, due to the resolution of the images, for best functionality adjust the size of the board to approximately 860 x 1290 px.
 
-![resolution]()
+![resolution](https://github.com/JBen3560/BlockThePig/blob/main/readme%20media/resolution.png)
 
 2. **Run the Script**
 ```bash
-python BlockThePigPlayer.py
+python .\source\BlockThePigPlayer.py
 ```
 
 3. **Watch it play!** The AI will detect the board, compute moves, and click automatically. When you want to stop the program, move your mouse to the top left corner.
 
 ## Demo
-![demo]()
+[Watch the demo!](https://youtu.be/xrw5CRwcou0)
