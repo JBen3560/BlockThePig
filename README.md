@@ -46,8 +46,9 @@ pip install -r requirements.txt
 ![resolution](https://github.com/JBen3560/BlockThePig/blob/main/readme%20media/resolution.png)
 
 2. **Run the Script**
+Make sure you are in the source folder.
 ```bash
-python .\source\BlockThePigPlayer.py
+python BlockThePigPlayer.py
 ```
 
 3. **Watch it play!** The AI will detect the board, compute moves, and click automatically. When you want to stop the program, move your mouse to the top left corner.
